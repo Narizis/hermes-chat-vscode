@@ -1,0 +1,176 @@
+{
+  "name": "hermes-chat",
+  "displayName": "Hermes Agent Chat",
+  "description": "Streaming chat with Hermes Agent in VS Code — ACP protocol, tool execution, memory, skills, and cron visualization",
+  "version": "0.2.3",
+  "publisher": "Poppywu124",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Narizis/hermes-chat-vscode"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "AI",
+    "Chat"
+  ],
+  "keywords": [
+    "hermes",
+    "agent",
+    "ai",
+    "chat",
+    "assistant",
+    "memory",
+    "acp"
+  ],
+  "icon": "icon.png",
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hermes-chat",
+          "title": "Hermes",
+          "icon": "icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "hermes-chat": [
+        {
+          "type": "webview",
+          "id": "hermes-chat.chatView",
+          "name": "Chat"
+        },
+        {
+          "id": "hermes-chat.memoryView",
+          "name": "Memory"
+        },
+        {
+          "id": "hermes-chat.skillsView",
+          "name": "Skills"
+        },
+        {
+          "id": "hermes-chat.cronView",
+          "name": "Cron Jobs"
+        },
+        {
+          "id": "hermes-chat.modelView",
+          "name": "Model"
+        },
+        {
+          "id": "hermes-chat.usageView",
+          "name": "Token Usage"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "hermes-chat.newSession",
+        "title": "Hermes: New Session",
+        "icon": "$(add)"
+      },
+      {
+        "command": "hermes-chat.clearChat",
+        "title": "Hermes: Clear Chat Display"
+      },
+      {
+        "command": "hermes-chat.refreshMemory",
+        "title": "Refresh Memory",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "hermes-chat.refreshSkills",
+        "title": "Refresh Skills",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "hermes-chat.refreshCron",
+        "title": "Refresh Cron Jobs",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "hermes-chat.switchModel",
+        "title": "Hermes: Switch Model",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "hermes-chat.refreshModel",
+        "title": "Refresh Model",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "hermes-chat.selectModel",
+        "title": "Hermes: Select Model"
+      },
+      {
+        "command": "hermes-chat.refreshUsage",
+        "title": "Refresh Usage",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "hermes-chat.newSession",
+          "when": "view == hermes-chat.chatView",
+          "group": "navigation"
+        },
+        {
+          "command": "hermes-chat.refreshMemory",
+          "when": "view == hermes-chat.memoryView",
+          "group": "navigation"
+        },
+        {
+          "command": "hermes-chat.refreshSkills",
+          "when": "view == hermes-chat.skillsView",
+          "group": "navigation"
+        },
+        {
+          "command": "hermes-chat.refreshCron",
+          "when": "view == hermes-chat.cronView",
+          "group": "navigation"
+        },
+        {
+          "command": "hermes-chat.switchModel",
+          "when": "view == hermes-chat.modelView",
+          "group": "navigation"
+        },
+        {
+          "command": "hermes-chat.refreshModel",
+          "when": "view == hermes-chat.modelView",
+          "group": "navigation"
+        },
+        {
+          "command": "hermes-chat.refreshUsage",
+          "when": "view == hermes-chat.usageView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Hermes Chat",
+      "properties": {
+        "hermes-chat.hermesPath": {
+          "type": "string",
+          "default": "hermes",
+          "description": "Path to the Hermes CLI executable"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  }
+}
