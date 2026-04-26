@@ -1,7 +1,7 @@
 {
   "name": "hermes-chat",
   "displayName": "Hermes Agent Chat",
-  "description": "Streaming chat with Hermes Agent in VS Code — ACP protocol, tool execution, memory, skills, and cron visualization",
+  "description": "Streaming Hermes Agent chat with ACP, tool calls, memory, skills, models, cron jobs, and token usage",
   "version": "0.2.3",
   "publisher": "Poppywu124",
   "license": "MIT",
@@ -16,14 +16,26 @@
     "AI",
     "Chat"
   ],
+  "galleryBanner": {
+    "color": "#1f2937",
+    "theme": "dark"
+  },
   "keywords": [
     "hermes",
+    "hermes-agent",
     "agent",
     "ai",
     "chat",
     "assistant",
     "memory",
-    "acp"
+    "acp",
+    "mcp",
+    "tool-calling",
+    "streaming-chat",
+    "coding-agent",
+    "vscode-agent",
+    "model-switching",
+    "token-usage"
   ],
   "icon": "icon.png",
   "activationEvents": [],
@@ -33,7 +45,7 @@
       "activitybar": [
         {
           "id": "hermes-chat",
-          "title": "Hermes",
+          "title": "Hermes Agent",
           "icon": "icon.svg"
         }
       ]
@@ -158,6 +170,12 @@
           "type": "string",
           "default": "hermes",
           "description": "Path to the Hermes CLI executable"
+        },
+        "hermes-chat.timeout": {
+          "type": "number",
+          "default": 180,
+          "minimum": 1,
+          "description": "Maximum time in seconds to wait for Hermes ACP requests"
         }
       }
     }
@@ -166,7 +184,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts"
+    "lint": "tsc --noEmit -p ./"
   },
   "devDependencies": {
     "@types/node": "^18.x",

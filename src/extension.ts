@@ -9,11 +9,29 @@ function getHermesPath(): string {
     return vscode.workspace.getConfiguration('hermes-chat').get('hermesPath', 'hermes');
 }
 
+function getTimeoutMs(): number {
+    const seconds = vscode.workspace.getConfiguration('hermes-chat').get('timeout', 180);
+    return Math.max(1, seconds) * 1000;
+}
+
 async function checkHermesInstalled(): Promise<boolean> {
     return new Promise((resolve) => {
         const proc = spawn(getHermesPath(), ['version'], { stdio: ['pipe', 'pipe', 'pipe'] });
-        proc.on('close', (code) => resolve(code === 0));
-        proc.on('error', () => resolve(false));
+        let settled = false;
+        const finish = (installed: boolean) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            resolve(installed);
+        };
+
+        const timeout = setTimeout(() => {
+            proc.kill();
+            finish(false);
+        }, Math.min(getTimeoutMs(), 10_000));
+
+        proc.on('close', (code) => finish(code === 0));
+        proc.on('error', () => finish(false));
     });
 }
 

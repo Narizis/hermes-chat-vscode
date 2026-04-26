@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Improve Marketplace positioning with clearer AI agent description, search keywords, and README feature matrix.
+- Add configurable ACP request timeout, request cleanup, safer Webview CSP, and asynchronous usage storage.
+
 ## 0.2.0 (2026-04-19)
 
 - **Switched to ACP protocol** — uses `hermes acp` for bidirectional streaming

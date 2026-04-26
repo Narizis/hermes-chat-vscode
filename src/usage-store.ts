@@ -1,6 +1,6 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { promises as fs } from 'fs';
 import { UsageInfo } from './types';
 
 const USAGE_DIR = path.join(os.homedir(), '.hermes', 'usage');
@@ -29,8 +29,8 @@ export interface AggregatedUsage {
 const EMPTY: AggregatedUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0, thoughtTokens: 0, cachedReadTokens: 0, messageCount: 0 };
 
 export class UsageStore {
-    record(usage: UsageInfo, model?: string, provider?: string): void {
-        if (!fs.existsSync(USAGE_DIR)) fs.mkdirSync(USAGE_DIR, { recursive: true });
+    async record(usage: UsageInfo, model?: string, provider?: string): Promise<void> {
+        await fs.mkdir(USAGE_DIR, { recursive: true });
         const record: UsageRecord = {
             timestamp: Date.now(),
             model,
@@ -41,12 +41,10 @@ export class UsageStore {
             thoughtTokens: usage.thoughtTokens || 0,
             cachedReadTokens: usage.cachedReadTokens || 0,
         };
-        fs.appendFileSync(USAGE_FILE, JSON.stringify(record) + '\n');
+        await fs.appendFile(USAGE_FILE, JSON.stringify(record) + '\n', 'utf8');
     }
 
-    query(period: 'day' | 'week' | 'month' | 'all'): AggregatedUsage {
-        if (!fs.existsSync(USAGE_FILE)) return { ...EMPTY };
-
+    async query(period: 'day' | 'week' | 'month' | 'all'): Promise<AggregatedUsage> {
         const now = Date.now();
         const cutoff = period === 'all' ? 0
             : period === 'month' ? now - 30 * 86400000
@@ -54,7 +52,14 @@ export class UsageStore {
             : now - startOfDayOffset(now);
 
         const agg: AggregatedUsage = { ...EMPTY };
-        const lines = fs.readFileSync(USAGE_FILE, 'utf8').split('\n');
+        let lines: string[];
+        try {
+            lines = (await fs.readFile(USAGE_FILE, 'utf8')).split('\n');
+        } catch (err) {
+            if ((err as NodeJS.ErrnoException).code === 'ENOENT') return agg;
+            throw err;
+        }
+
         for (const line of lines) {
             if (!line.trim()) continue;
             try {

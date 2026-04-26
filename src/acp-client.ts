@@ -1,6 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as vscode from 'vscode';
 import { EventEmitter } from 'events';
+import { UsageInfo } from './types';
 
 interface JsonRpcRequest {
     jsonrpc: '2.0';
@@ -41,30 +42,27 @@ export interface ToolCall {
     rawOutput?: unknown;
 }
 
-export interface UsageInfo {
-    inputTokens?: number;
-    outputTokens?: number;
-    totalTokens?: number;
-    thoughtTokens?: number;
-    cachedReadTokens?: number;
-}
-
 export class AcpClient extends EventEmitter {
     private proc: ChildProcess | null = null;
     private nextId = 1;
-    private pendingRequests = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+    private pendingRequests = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void; timeout: NodeJS.Timeout }>();
     private buffer = '';
     private initialized = false;
     private sessionId: string | null = null;
     private hermesPath: string;
+    private requestTimeoutMs: number;
+    private stopping = false;
 
-    constructor(hermesPath: string) {
+    constructor(hermesPath: string, requestTimeoutMs = 180_000) {
         super();
         this.hermesPath = hermesPath;
+        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     async start(): Promise<void> {
         if (this.proc) return;
+
+        this.stopping = false;
 
         this.proc = spawn(this.hermesPath, ['acp'], {
             env: { ...process.env },
@@ -81,9 +79,13 @@ export class AcpClient extends EventEmitter {
         });
 
         this.proc.on('exit', (code) => {
-            this.emit('exit', code);
+            if (!this.stopping) {
+                this.emit('exit', code);
+            }
             this.proc = null;
-            for (const { reject } of this.pendingRequests.values()) {
+            this.initialized = false;
+            for (const { reject, timeout } of this.pendingRequests.values()) {
+                clearTimeout(timeout);
                 reject(new Error(`Hermes ACP process exited with code ${code}`));
             }
             this.pendingRequests.clear();
@@ -116,6 +118,7 @@ export class AcpClient extends EventEmitter {
             const pending = this.pendingRequests.get(msg.id);
             if (pending) {
                 this.pendingRequests.delete(msg.id);
+                clearTimeout(pending.timeout);
                 if ('error' in msg && msg.error) {
                     pending.reject(new Error(msg.error.message));
                 } else {
@@ -225,11 +228,24 @@ export class AcpClient extends EventEmitter {
     private request<T = unknown>(method: string, params?: unknown): Promise<T> {
         const id = this.nextId++;
         return new Promise<T>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                this.pendingRequests.delete(id);
+                reject(new Error(`Hermes ACP request timed out after ${Math.round(this.requestTimeoutMs / 1000)}s: ${method}`));
+            }, this.requestTimeoutMs);
+
             this.pendingRequests.set(id, {
                 resolve: resolve as (v: unknown) => void,
                 reject,
+                timeout,
             });
-            this.send({ jsonrpc: '2.0', id, method, params });
+
+            try {
+                this.send({ jsonrpc: '2.0', id, method, params });
+            } catch (err) {
+                clearTimeout(timeout);
+                this.pendingRequests.delete(id);
+                reject(err instanceof Error ? err : new Error(String(err)));
+            }
         });
     }
 
@@ -297,8 +313,15 @@ export class AcpClient extends EventEmitter {
 
     stop(): void {
         if (this.proc) {
+            this.stopping = true;
             this.proc.kill();
             this.proc = null;
         }
+        this.initialized = false;
+        for (const { reject, timeout } of this.pendingRequests.values()) {
+            clearTimeout(timeout);
+            reject(new Error('Hermes ACP process stopped'));
+        }
+        this.pendingRequests.clear();
     }
 }

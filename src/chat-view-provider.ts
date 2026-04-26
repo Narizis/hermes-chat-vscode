@@ -25,12 +25,17 @@ export class HermesChatViewProvider implements vscode.WebviewViewProvider {
         return vscode.workspace.getConfiguration('hermes-chat').get('hermesPath', 'hermes');
     }
 
+    private getRequestTimeoutMs(): number {
+        const seconds = vscode.workspace.getConfiguration('hermes-chat').get('timeout', 180);
+        return Math.max(1, seconds) * 1000;
+    }
+
     private async ensureAcp(): Promise<AcpClient> {
         if (this.acp && this.acp.isReady()) return this.acp;
 
         if (this.acp) this.acp.stop();
 
-        const client = new AcpClient(this.getHermesPath());
+        const client = new AcpClient(this.getHermesPath(), this.getRequestTimeoutMs());
         client.on('sessionUpdate', (evt: SessionUpdate) => this.handleSessionUpdate(evt));
         client.on('exit', (code: number | null) => {
             this.postMessage({ type: 'showError', error: `Hermes ACP exited (code ${code}). Will restart on next message.` });
@@ -108,7 +113,7 @@ export class HermesChatViewProvider implements vscode.WebviewViewProvider {
                 this.currentAssistantMessage.usage = result.usage;
                 this.messages.push(this.currentAssistantMessage);
                 this.postMessage({ type: 'finalizeAssistantMessage', usage: result.usage });
-                if (result.usage) this.usageStore.record(result.usage);
+                if (result.usage) void this.usageStore.record(result.usage);
             }
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : String(err);
@@ -222,11 +227,13 @@ export class HermesChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private getHtml(): string {
+        const nonce = getNonce();
         return /*html*/ `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${this.view?.webview.cspSource} https: data:; style-src ${this.view?.webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -464,7 +471,7 @@ body {
         <button id="cancel-btn">Stop</button>
     </div>
 
-<script>
+<script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
 const messagesEl = document.getElementById('messages');
 const welcomeEl = document.getElementById('welcome');
@@ -555,10 +562,11 @@ function appendThought(text) {
 
 function renderTool(tool) {
     const existing = toolEls.get(tool.id);
+    const status = ['pending', 'in_progress', 'completed', 'failed'].includes(tool.status) ? tool.status : 'pending';
     const html = \`
         <div class="tool-header">
             <span>🔧 \${escapeHtml(tool.name)}</span>
-            <span class="tool-status \${tool.status}">\${tool.status}</span>
+            <span class="tool-status \${status}">\${status}</span>
         </div>
         \${tool.args ? \`<details><summary>input</summary><pre>\${escapeHtml(typeof tool.args === 'string' ? tool.args : JSON.stringify(tool.args, null, 2))}</pre></details>\` : ''}
         \${tool.result ? \`<details><summary>output</summary><pre>\${escapeHtml(tool.result)}</pre></details>\` : ''}
@@ -661,4 +669,13 @@ window.addEventListener('message', (event) => {
 </body>
 </html>`;
     }
+}
+
+function getNonce(): string {
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let text = '';
+    for (let i = 0; i < 32; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
 }

@@ -405,10 +405,10 @@ export class UsageTreeProvider implements vscode.TreeDataProvider<UsageItem> {
             { label: 'All Time', period: 'all', icon: 'history' },
         ];
 
-        return periods.map(({ label, period, icon }) => {
-            const agg = this.store.query(period);
+        return Promise.all(periods.map(async ({ label, period, icon }) => {
+            const agg = await this.store.query(period);
             return new UsageItem(label, agg, icon);
-        });
+        }));
     }
 }
 
