@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-04-26)
 
 - Improve Marketplace positioning with clearer AI agent description, search keywords, and README feature matrix.
 - Document local Hermes CLI prerequisites, ACP requirement, and Hermes-owned configuration paths.
