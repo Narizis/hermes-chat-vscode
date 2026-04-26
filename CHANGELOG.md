@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Improve Marketplace positioning with clearer AI agent description, search keywords, and README feature matrix.
+- Document local Hermes CLI prerequisites, ACP requirement, and Hermes-owned configuration paths.
 - Add configurable ACP request timeout, request cleanup, safer Webview CSP, and asynchronous usage storage.
 
 ## 0.2.0 (2026-04-19)

@@ -33,6 +33,34 @@ Hermes Agent Chat is built for developers who want the full Hermes agent loop in
 - [Hermes Agent](https://github.com/hermes-agent/hermes) installed and configured on your system.
 - Run `hermes doctor` before using the extension to verify your local Hermes setup.
 
+## Before You Install
+
+This extension does not bundle Hermes Agent. It is a VS Code frontend for a local Hermes CLI installation, so your machine must already be able to run Hermes from a terminal.
+
+Verify these commands before opening the extension:
+
+```bash
+hermes doctor
+hermes version
+hermes acp
+```
+
+If `hermes` is not on your `PATH`, set `hermes-chat.hermesPath` in VS Code to the full path of the Hermes executable.
+
+Hermes owns the agent runtime configuration. Model providers, API keys, tools, skills, MCP servers, and memory behavior are configured by Hermes itself, not inside this extension.
+
+The sidebar reads local Hermes state when available:
+
+| Extension view | Local Hermes data used |
+|----------------|------------------------|
+| Memory | `~/.hermes/memories/USER.md`, `~/.hermes/memories/MEMORY.md`, `~/.hermes/SOUL.md` |
+| Skills | `~/.hermes/skills/` |
+| Cron Jobs | `~/.hermes/cron/jobs.json` |
+| Model | `~/.hermes/config.yaml` |
+| Token Usage | `~/.hermes/usage/usage.jsonl` |
+
+Missing files show empty states in the sidebar. They do not mean the extension is broken; they usually mean Hermes has not created that feature data yet.
+
 ## Getting Started
 
 1. Install and configure Hermes Agent.
