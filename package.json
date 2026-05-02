@@ -2,7 +2,7 @@
   "name": "hermes-chat",
   "displayName": "Hermes Agent Chat",
   "description": "Streaming Hermes Agent chat with ACP, tool calls, memory, skills, models, cron jobs, and token usage",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "publisher": "Poppywu124",
   "license": "MIT",
   "repository": {

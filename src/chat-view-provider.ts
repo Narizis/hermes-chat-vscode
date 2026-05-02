@@ -39,6 +39,7 @@ export class HermesChatViewProvider implements vscode.WebviewViewProvider {
     public static readonly panelViewType = 'hermes-chat.chatPanel';
     private static readonly maxAttachedFileBytes = 20_000;
     private static readonly maxAttachedFiles = 6;
+    private static readonly maxStoredMessages = 500;
 
     private sidebarView?: vscode.WebviewView;
     private panel?: vscode.WebviewPanel;
@@ -75,6 +76,14 @@ export class HermesChatViewProvider implements vscode.WebviewViewProvider {
     private getRequestTimeoutMs(): number {
         const seconds = vscode.workspace.getConfiguration('hermes-chat').get('timeout', 180);
         return Math.max(1, seconds) * 1000;
+    }
+
+    private appendMessage(message: ChatMessage): void {
+        this.messages.push(message);
+        const max = HermesChatViewProvider.maxStoredMessages;
+        if (this.messages.length > max) {
+            this.messages.splice(0, this.messages.length - max);
+        }
     }
 
     private async ensureAcp(): Promise<AcpClient> {
@@ -547,7 +556,7 @@ export class HermesChatViewProvider implements vscode.WebviewViewProvider {
 
         const query = this.buildQueryWithContext(text);
         const userMessage: ChatMessage = { role: 'user', content: text, timestamp: Date.now() };
-        this.messages.push(userMessage);
+        this.appendMessage(userMessage);
         this.postMessage({ type: 'addMessage', message: userMessage });
 
         this.isProcessing = true;
@@ -570,7 +579,7 @@ export class HermesChatViewProvider implements vscode.WebviewViewProvider {
 
             if (this.currentAssistantMessage) {
                 this.currentAssistantMessage.usage = result.usage;
-                this.messages.push(this.currentAssistantMessage);
+                this.appendMessage(this.currentAssistantMessage);
                 this.postMessage({ type: 'finalizeAssistantMessage', usage: result.usage });
                 if (result.usage) void this.usageStore.record(result.usage);
             }
@@ -1513,7 +1522,7 @@ function renderMarkdown(text) {
     let escaped = escapeHtml(text).replace(/\`\`\`(\\w*)\\n([\\s\\S]*?)\`\`\`/g, (_, lang, code) => {
         const idx = codeBlocks.length;
         const langLabel = lang ? '<div class="subtitle">' + escapeHtml(lang) + '</div>' : '';
-        codeBlocks.push('<pre><code>' + code + '</code></pre>');
+        codeBlocks.push(langLabel + '<pre><code>' + code + '</code></pre>');
         return '\\n@@CODEBLOCK_' + idx + '@@\\n';
     });
 
