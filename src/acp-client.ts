@@ -1,6 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as vscode from 'vscode';
 import { EventEmitter } from 'events';
+import * as path from 'path';
 import { UsageInfo } from './types';
 
 interface JsonRpcRequest {
@@ -57,6 +58,27 @@ export class AcpClient extends EventEmitter {
         super();
         this.hermesPath = hermesPath;
         this.requestTimeoutMs = requestTimeoutMs;
+    }
+
+    private getWorkspaceRoots(): string[] {
+        return (vscode.workspace.workspaceFolders || []).map((folder) => path.resolve(folder.uri.fsPath));
+    }
+
+    private assertWorkspacePath(targetPath: string): void {
+        const roots = this.getWorkspaceRoots();
+        if (!roots.length) {
+            throw new Error('Workspace file access is unavailable because no folder is open in VS Code.');
+        }
+
+        const normalizedTarget = path.resolve(targetPath);
+        const isAllowed = roots.some((root) => {
+            const relative = path.relative(root, normalizedTarget);
+            return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+        });
+
+        if (!isAllowed) {
+            throw new Error(`Blocked file access outside the current workspace: ${targetPath}`);
+        }
     }
 
     async start(): Promise<void> {
@@ -192,6 +214,7 @@ export class AcpClient extends EventEmitter {
     private async handleReadFile(id: number, params: Record<string, unknown> | undefined): Promise<void> {
         try {
             const path = params?.path as string;
+            this.assertWorkspacePath(path);
             const content = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
             this.sendResponse(id, { content: Buffer.from(content).toString('utf8') });
         } catch (e) {
@@ -203,6 +226,7 @@ export class AcpClient extends EventEmitter {
         try {
             const path = params?.path as string;
             const content = params?.content as string;
+            this.assertWorkspacePath(path);
             await vscode.workspace.fs.writeFile(vscode.Uri.file(path), Buffer.from(content, 'utf8'));
             this.sendResponse(id, null);
         } catch (e) {

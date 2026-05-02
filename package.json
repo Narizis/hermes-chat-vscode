@@ -2,7 +2,7 @@
   "name": "hermes-chat",
   "displayName": "Hermes Agent Chat",
   "description": "Streaming Hermes Agent chat with ACP, tool calls, memory, skills, models, cron jobs, and token usage",
-  "version": "0.3.0",
+  "version": "0.4.2",
   "publisher": "Poppywu124",
   "license": "MIT",
   "repository": {
@@ -55,27 +55,33 @@
         {
           "type": "webview",
           "id": "hermes-chat.chatView",
-          "name": "Chat"
+          "name": "Chat",
+          "visibility": "visible"
         },
         {
           "id": "hermes-chat.memoryView",
-          "name": "Memory"
+          "name": "Memory",
+          "visibility": "collapsed"
         },
         {
           "id": "hermes-chat.skillsView",
-          "name": "Skills"
+          "name": "Skills",
+          "visibility": "collapsed"
         },
         {
           "id": "hermes-chat.cronView",
-          "name": "Cron Jobs"
+          "name": "Cron Jobs",
+          "visibility": "collapsed"
         },
         {
           "id": "hermes-chat.modelView",
-          "name": "Model"
+          "name": "Model",
+          "visibility": "collapsed"
         },
         {
           "id": "hermes-chat.usageView",
-          "name": "Token Usage"
+          "name": "Token Usage",
+          "visibility": "collapsed"
         }
       ]
     },
@@ -84,6 +90,11 @@
         "command": "hermes-chat.newSession",
         "title": "Hermes: New Session",
         "icon": "$(add)"
+      },
+      {
+        "command": "hermes-chat.openChatPanel",
+        "title": "Hermes: Open Chat in Panel",
+        "icon": "$(open-preview)"
       },
       {
         "command": "hermes-chat.clearChat",
@@ -128,6 +139,11 @@
       "view/title": [
         {
           "command": "hermes-chat.newSession",
+          "when": "view == hermes-chat.chatView",
+          "group": "navigation"
+        },
+        {
+          "command": "hermes-chat.openChatPanel",
           "when": "view == hermes-chat.chatView",
           "group": "navigation"
         },
@@ -189,6 +205,7 @@
   "devDependencies": {
     "@types/node": "^18.x",
     "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^3.9.1",
     "typescript": "^5.0.0"
   }
 }

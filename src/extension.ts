@@ -54,6 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('hermes-chat.newSession', () => chatProvider.newSession()),
+        vscode.commands.registerCommand('hermes-chat.openChatPanel', () => chatProvider.openPanel()),
         vscode.commands.registerCommand('hermes-chat.clearChat', () => chatProvider.clearChat()),
         vscode.commands.registerCommand('hermes-chat.refreshMemory', () => memoryProvider.refresh()),
         vscode.commands.registerCommand('hermes-chat.refreshSkills', () => skillsProvider.refresh()),
