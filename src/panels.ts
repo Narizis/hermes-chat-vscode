@@ -203,6 +203,11 @@ export class CronItem extends vscode.TreeItem {
                 `Next run: ${next}`,
             );
             this.contextValue = 'cronJob';
+            this.command = {
+                command: 'hermes-chat.openCronJob',
+                title: 'Open Cron Job',
+                arguments: [job],
+            };
         } else {
             this.iconPath = new vscode.ThemeIcon('info');
         }

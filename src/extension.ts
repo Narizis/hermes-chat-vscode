@@ -14,6 +14,26 @@ function getTimeoutMs(): number {
     return Math.max(1, seconds) * 1000;
 }
 
+function runHermes(args: string[], timeoutMs = 30_000): Promise<{ code: number; stdout: string; stderr: string }> {
+    return new Promise((resolve) => {
+        const proc = spawn(getHermesPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
+        let stdout = '';
+        let stderr = '';
+        let settled = false;
+        const finish = (code: number) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(t);
+            resolve({ code, stdout, stderr });
+        };
+        const t = setTimeout(() => { proc.kill(); finish(-1); }, timeoutMs);
+        proc.stdout.on('data', (d) => { stdout += d.toString('utf8'); });
+        proc.stderr.on('data', (d) => { stderr += d.toString('utf8'); });
+        proc.on('close', (code) => finish(code ?? -1));
+        proc.on('error', () => finish(-1));
+    });
+}
+
 async function checkHermesInstalled(): Promise<boolean> {
     return new Promise((resolve) => {
         const proc = spawn(getHermesPath(), ['version'], { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -59,6 +79,52 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('hermes-chat.refreshMemory', () => memoryProvider.refresh()),
         vscode.commands.registerCommand('hermes-chat.refreshSkills', () => skillsProvider.refresh()),
         vscode.commands.registerCommand('hermes-chat.refreshCron', () => cronProvider.refresh()),
+        vscode.commands.registerCommand('hermes-chat.openCronJob', async (job: unknown) => {
+            const doc = await vscode.workspace.openTextDocument({
+                language: 'json',
+                content: JSON.stringify(job, null, 2),
+            });
+            await vscode.window.showTextDocument(doc, { preview: true });
+        }),
+        vscode.commands.registerCommand('hermes-chat.createCron', async () => {
+            const schedule = await vscode.window.showInputBox({
+                prompt: 'Schedule',
+                placeHolder: "e.g. '30m', 'every 2h', '0 9 * * *'",
+                ignoreFocusOut: true,
+                validateInput: (v) => v.trim() ? null : 'Schedule is required',
+            });
+            if (!schedule) return;
+
+            const promptText = await vscode.window.showInputBox({
+                prompt: 'Prompt for the agent (optional)',
+                placeHolder: 'e.g. Summarize today\'s GitHub notifications',
+                ignoreFocusOut: true,
+            });
+            if (promptText === undefined) return;
+
+            const name = await vscode.window.showInputBox({
+                prompt: 'Job name (optional)',
+                ignoreFocusOut: true,
+            });
+            if (name === undefined) return;
+
+            const args = ['cron', 'create'];
+            if (name.trim()) args.push('--name', name.trim());
+            args.push(schedule.trim());
+            if (promptText.trim()) args.push(promptText.trim());
+
+            const status = vscode.window.setStatusBarMessage('$(sync~spin) Creating cron job...');
+            const result = await runHermes(args);
+            status.dispose();
+
+            if (result.code === 0) {
+                vscode.window.showInformationMessage(`Cron job created.${result.stdout.trim() ? ' ' + result.stdout.trim().split('\n')[0] : ''}`);
+                cronProvider.refresh();
+            } else {
+                const err = (result.stderr || result.stdout || `exit ${result.code}`).trim();
+                vscode.window.showErrorMessage(`Failed to create cron job: ${err}`);
+            }
+        }),
         vscode.commands.registerCommand('hermes-chat.refreshModel', () => modelProvider.refresh()),
         vscode.commands.registerCommand('hermes-chat.refreshUsage', () => usageProvider.refresh()),
         vscode.commands.registerCommand('hermes-chat.switchModel', async () => {
