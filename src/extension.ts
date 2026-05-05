@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { HermesChatViewProvider } from './chat-view-provider';
 import { MemoryTreeProvider, SkillsTreeProvider, CronTreeProvider, ModelTreeProvider, UsageTreeProvider } from './panels';
 import { spawn } from 'child_process';
+import { SetupWizard } from './setup-wizard';
 
 let statusBarItem: vscode.StatusBarItem;
 
@@ -127,6 +128,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('hermes-chat.refreshModel', () => modelProvider.refresh()),
         vscode.commands.registerCommand('hermes-chat.refreshUsage', () => usageProvider.refresh()),
+        vscode.commands.registerCommand('hermes-chat.runSetup', () => SetupWizard.show(context)),
         vscode.commands.registerCommand('hermes-chat.switchModel', async () => {
             const providers = modelProvider.getProviders();
             const currentProvider = modelProvider.getActiveProvider();
@@ -223,14 +225,9 @@ export async function activate(context: vscode.ExtensionContext) {
     } else {
         statusBarItem.text = '$(warning) Hermes not found';
         statusBarItem.show();
-        vscode.window
-            .showWarningMessage('Hermes CLI not found. Install it to use Hermes Chat.', 'Install Guide')
-            .then((choice) => {
-                if (choice === 'Install Guide') {
-                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/hermes-agent/hermes'));
-                }
-            });
     }
+
+    void SetupWizard.maybeShowOnActivate(context);
 
     context.subscriptions.push({ dispose: () => chatProvider.dispose() });
 }

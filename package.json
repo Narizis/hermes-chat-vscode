@@ -38,7 +38,9 @@
     "token-usage"
   ],
   "icon": "icon.png",
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -99,6 +101,10 @@
       {
         "command": "hermes-chat.clearChat",
         "title": "Hermes: Clear Chat Display"
+      },
+      {
+        "command": "hermes-chat.runSetup",
+        "title": "Hermes: Run Setup Wizard"
       },
       {
         "command": "hermes-chat.refreshMemory",
@@ -227,5 +233,9 @@
     "@types/vscode": "^1.80.0",
     "@vscode/vsce": "^3.9.1",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^4.1.1"
   }
 }
