@@ -2,6 +2,14 @@
 
 # Changelog
 
+# Changelog
+
+## 0.4.7 (2026-05-05)
+
+- Add Marketplace screenshots: streaming chat, setup wizard, sidebar panels.
+- Add MIT LICENSE file.
+- Add an AcpClient smoke test suite (runs against a fake ACP server, no Hermes install required) and a GitHub Actions workflow that runs lint + tests on every push and PR.
+
 ## 0.4.6 (2026-05-05)
 
 - Fix blank assistant reply after VS Code reload: validate the resumed sessionId returned by Hermes and fall back to a fresh session when the previous one is gone.
