@@ -4,6 +4,22 @@ The VS Code control center for [Hermes Agent](https://github.com/hermes-agent/he
 
 Hermes Agent Chat is built for developers who want the full Hermes agent loop inside the editor. It connects to Hermes through ACP, streams responses as they are generated, shows tool execution as it happens, and keeps useful agent state visible without leaving VS Code.
 
+## Screenshots
+
+> Drop PNGs into `media/screenshots/` with these filenames and they will render below.
+
+![Streaming chat with tool calls](media/screenshots/chat-streaming.png)
+
+*Streaming chat in the sidebar — agent text, reasoning, and tool calls appear in place as Hermes works.*
+
+![Setup wizard](media/screenshots/setup-wizard.png)
+
+*First-run setup wizard — install Hermes CLI, pick a provider, paste an API key, done.*
+
+![Memory and skills panels](media/screenshots/panels.png)
+
+*Memory, Skills, Cron, Model, and Token Usage panels live next to the chat.*
+
 ## Highlights
 
 - **Streaming ACP chat** - Talk to Hermes Agent from the Activity Bar with live response updates.

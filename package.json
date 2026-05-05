@@ -226,7 +226,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "tsc --noEmit -p ./"
+    "lint": "tsc --noEmit -p ./",
+    "test": "npm run compile && node test/smoke.js"
   },
   "devDependencies": {
     "@types/node": "^18.x",
